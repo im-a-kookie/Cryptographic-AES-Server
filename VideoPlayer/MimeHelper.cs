@@ -38,6 +38,7 @@ namespace VideoPlayer
             {".wmv", "video/x-ms-wmv"},
             {".xml", "text/xml"},
             {".zip", "application/zip"},
+            {".html", "text/html" }
         };
 
         static HashSet<string> encryptedTypes = [];

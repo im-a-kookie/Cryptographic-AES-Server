@@ -17,6 +17,9 @@ namespace VideoPlayer
 {
     public partial class VLCPlayerWindow : Form
     {
+        public static List<VLCPlayerWindow> ActiveForms = new List<VLCPlayerWindow>();
+
+
         private LibVLCSharp.Shared.LibVLC _libVLC;
         private LibVLCSharp.Shared.MediaPlayer _mediaPlayer;
 
@@ -120,6 +123,9 @@ namespace VideoPlayer
         public VLCPlayerWindow(string url)
         {
             InitializeComponent();
+
+            this.Load += (s, e) => { lock (ActiveForms) ActiveForms.Add(this); };
+            this.FormClosed += (s, e) => { lock (ActiveForms) ActiveForms.Remove(this); };
 
             _libVLC = new();
             _mediaPlayer = new(_libVLC);

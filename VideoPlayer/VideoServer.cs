@@ -302,6 +302,28 @@ namespace VideoPlayer
             string requestDetails = url.AbsolutePath;
             var parts = requestDetails.Split(';');
 
+
+
+            if (requestDetails.ToLower().EndsWith("/controller"))
+            {
+                c.Response.StatusCode = (int)StreamFile(c, "controller.html", null);
+                if (c.Response.StatusCode == (int)HttpStatusCode.OK)
+                {
+                    c.Response.AddHeader("Date", DateTime.Now.ToString("r"));
+                    c.Response.AddHeader("Last-Modified", DateTime.MinValue.ToString("r"));
+                }
+                c.Response.OutputStream.Close();
+                return;
+            }
+            else if (requestDetails.ToLower().EndsWith("/playpause") && c.Request.HttpMethod.Equals("POST"))
+            {
+                foreach(var f in VLCPlayerWindow.ActiveForms)
+                {
+                    f.PlayPause();
+                }
+
+            }
+
             string? path = null;
             string? key = null;
 
