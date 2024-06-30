@@ -333,7 +333,6 @@ namespace VideoPlayer
             {
                 try
                 {
-                    Stream? in_stream = null;
                     Stream? stream = null;
                     try
                     {
@@ -352,15 +351,16 @@ namespace VideoPlayer
                         }
 
                         //Now generate the streams
-                        in_stream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
-                        stream = in_stream;
-                        if (encrypted) stream = new EStream(in_stream, key ?? "default");
-                        
+                        stream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
+                        if (encrypted)
+                        {
+                            var k = AesHelper.DeriveKeyFromPassword(key ?? "default");
+                            stream = new CryptoStream(stream, k.Key, k.IV);
+                        }
 
                         // get mime type
                         long fileLength = stream.Length;
                         context.Response.ContentType = mime;
-
 
                         string? rangeHeader = context.Request.Headers["Range"];
                         if (string.IsNullOrEmpty(rangeHeader))
@@ -392,7 +392,7 @@ namespace VideoPlayer
                                 context.Response.ContentLength64 = contentLength;
 
                                 // Write the requested range to the output stream
-                                byte[] buffer = new byte[64 * 1024]; // 64KB buffer? Probably not a big deal what the buffer really is
+                                byte[] buffer = new byte[128 * 1024]; // 64KB buffer? Probably not a big deal what the buffer really is
                                 stream.Seek(start, SeekOrigin.Begin);
                                 while (contentLength > 0)
                                 {
@@ -413,7 +413,6 @@ namespace VideoPlayer
                     finally
                     {
                         //Now we can close the streams
-                        in_stream?.Dispose();
                         stream?.Dispose();
                     }
                     statusCode = HttpStatusCode.OK;

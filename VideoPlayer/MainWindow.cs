@@ -34,11 +34,7 @@ namespace VideoPlayer
                 if (File.Exists(tbInput.Text))
                 {
                     tbOutput.Text = Path.ChangeExtension(tbInput.Text, ".emkv");
-                    var p = EStream.EncryptFile(tbInput.Text, tbOutput.Text, "default");
-                    while (!p.completed)
-                    {
-                        Thread.Sleep(1);
-                    }
+                    AesHelper.EncryptFile(tbInput.Text, tbOutput.Text, "default");
                     string url = VideoServer.StartStreamingFile(tbOutput.Text);
                     var player = new VLCPlayerWindow(url);
                     player.Show();
