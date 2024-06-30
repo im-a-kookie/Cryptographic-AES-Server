@@ -34,6 +34,8 @@
             tbOutput = new TextBox();
             bEncrypt = new Button();
             label1 = new Label();
+            linkLabel1 = new LinkLabel();
+            label2 = new Label();
             SuspendLayout();
             // 
             // tbInput
@@ -79,21 +81,42 @@
             // 
             label1.Location = new Point(12, 9);
             label1.Name = "label1";
-            label1.Size = new Size(715, 103);
+            label1.Size = new Size(715, 66);
             label1.TabIndex = 2;
             label1.Text = resources.GetString("label1.Text");
             // 
-            // Form1
+            // linkLabel1
+            // 
+            linkLabel1.AutoSize = true;
+            linkLabel1.Location = new Point(132, 85);
+            linkLabel1.Name = "linkLabel1";
+            linkLabel1.Size = new Size(344, 20);
+            linkLabel1.TabIndex = 3;
+            linkLabel1.TabStop = true;
+            linkLabel1.Text = "https://www.youtubepp.com/watch?v=YyAuFiIv-V4";
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Location = new Point(12, 85);
+            label2.Name = "label2";
+            label2.Size = new Size(114, 20);
+            label2.TabIndex = 4;
+            label2.Text = "Easy Video Link:";
+            // 
+            // PlayerExampleForm
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(724, 200);
+            Controls.Add(label2);
+            Controls.Add(linkLabel1);
             Controls.Add(label1);
             Controls.Add(bEncrypt);
             Controls.Add(bOpen);
             Controls.Add(tbOutput);
             Controls.Add(tbInput);
-            Name = "Form1";
+            Name = "PlayerExampleForm";
             Text = "Demonstration Form";
             ResumeLayout(false);
             PerformLayout();
@@ -106,5 +129,7 @@
         private TextBox tbOutput;
         private Button bEncrypt;
         private Label label1;
+        private LinkLabel linkLabel1;
+        private Label label2;
     }
 }

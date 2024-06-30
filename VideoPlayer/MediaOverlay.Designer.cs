@@ -34,7 +34,7 @@
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(855, 566);
+            ClientSize = new Size(634, 345);
             Name = "MediaOverlay";
             Text = "MediaOverlay";
             ResumeLayout(false);

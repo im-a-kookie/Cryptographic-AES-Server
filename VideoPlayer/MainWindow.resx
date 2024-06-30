@@ -118,9 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="label1.Text" xml:space="preserve">
-    <value>Select a video file below, and then press Encrypt. The file is encrypted with AES256, and then streamed to the player via HTTP.
-
-While this provides little practical value in and of itself, it demonstrates a number of principles in scalable UI, streams, cryptography, and HTTP handling.</value>
+    <value>Select a video file below, and then press Encrypt. The file is encrypted with AES256, and then streamed to the player via HTTP. You'll need your own mp4 file. While this provides little practical value in and of itself, it demonstrates a number of principles in scalable UI, streams, cryptography, and HTTP handling.</value>
   </data>
   <metadata name="$this.Locked" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
