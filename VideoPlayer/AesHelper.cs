@@ -42,7 +42,7 @@ namespace VideoPlayer
                 using (FileStream outs = new FileStream(output, FileMode.CreateNew, FileAccess.Write, FileShare.None))
                 {
                     var kv = DeriveKeyFromPassword(password);
-                    using (CryptoStream cs = new CryptoStream(outs, kv.Key, kv.IV))
+                    using (AesCtrStream cs = new AesCtrStream(outs, kv.Key, kv.IV))
                     {
                         ins.CopyTo(cs);
                     }
@@ -98,6 +98,49 @@ namespace VideoPlayer
                 }
             }
         }
+
+
+        public static byte[] Encrypt(byte[] data, (byte[] key, byte[] iv) key)
+        {
+            using (Aes aesAlg = Aes.Create())
+            {
+                aesAlg.Key = key.key;
+                aesAlg.IV = key.iv;
+
+                using (MemoryStream msEncrypt = new MemoryStream())
+                {
+                    using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, aesAlg.CreateEncryptor(), CryptoStreamMode.Write))
+                    {
+                        csEncrypt.Write(data, 0, data.Length);
+                        csEncrypt.FlushFinalBlock();
+                    }
+                    return msEncrypt.ToArray();
+                }
+            }
+        }
+
+        public static byte[] Decrypt(byte[] encryptedData, (byte[] key, byte[] iv) key)
+        {
+            using (Aes aesAlg = Aes.Create())
+            {
+                aesAlg.Key = key.key;
+                aesAlg.IV = key.iv;
+
+                using (MemoryStream msDecrypt = new MemoryStream(encryptedData))
+                {
+                    using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, aesAlg.CreateDecryptor(), CryptoStreamMode.Read))
+                    {
+                        using (MemoryStream ms = new MemoryStream())
+                        {
+                            csDecrypt.CopyTo(ms);
+                            return ms.ToArray();
+                        }
+                    }
+                }
+            }
+        }
+
+
 
     }
 }

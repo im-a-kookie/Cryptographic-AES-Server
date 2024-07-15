@@ -15,7 +15,6 @@ namespace VideoPlayer
     internal class VideoServer
     {
 
-
         /// <summary>
         /// Whether or not the thing is terminating
         /// </summary>
@@ -126,8 +125,11 @@ namespace VideoPlayer
                 this.Port = port;
                 if (this.Port < 0) this.Port = DefaultPort;
 
+                //make sure we have a critical section around the server thread collection
                 lock (ActiveServers)
                 {
+                    //ensure that we don't recreate any servers
+                    //since that would be complicated and pointless
                     if (ActiveServers.ContainsKey(URL)) return;
                     ActiveServers.Add(URL, this);
                     //start a thread to host this server
@@ -136,38 +138,60 @@ namespace VideoPlayer
                 }
             }
 
+
+            /// <summary>
+            /// Provides an entry point for the HTTP server threads. 
+            /// 
+            /// <para>In general, we take a simple delegation approach here, basically the server thread 
+            /// is as light as possible, and simply shoots requests off to be processed on the threadpool.</para>
+            /// </summary>
             public void Enter()
             {
-                Interlocked.Increment(ref AliveServerCount);
-                if (Listener == null)
+                try
                 {
-                    Listener = new HttpListener();
-                    Console.WriteLine("Starting HTTP Server on: " + URL);
-                    Listener.Prefixes.Add(URL);
-                    Listener.Start();
-                }
-                while (Alive)
-                {
-                    try
+                    //note that we have a runing server
+                    Interlocked.Increment(ref AliveServerCount);
+                    //now make sure that the server has an HTTP listener assigned to it
+                    if (Listener == null)
                     {
-                        var context = Listener?.GetContext();
-                        if (context != null) Tasks.Add((this, context));
+                        Listener = new HttpListener();
+                        Console.WriteLine("Starting HTTP Server on: " + URL);
+                        Listener.Prefixes.Add(URL);
+                        Listener.Start();
                     }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine("ERROR: " + e.Message);
-                        Alive = false;
-                    }
-                }
 
-                //and notify that we're dead
-                lock (ActiveServers)
-                {
-                    ActiveServers.Remove(URL);
+                    //and keep it running for as long as needed
+                    while (Alive)
+                    {
+                        try
+                        {
+                            var context = Listener?.GetContext();
+                            if (context != null) Tasks.Add((this, context));
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine("ERROR: " + e.Message);
+                            Alive = false;
+                        }
+                    }
                 }
-                Interlocked.Decrement(ref AliveServerCount);
+                //be sure to catch any exceptions
+                catch (Exception e)
+                {
+                    Console.WriteLine("ERROR: " + e.Message);
+                    Alive = false;
+                }
+                //We need to be as sure as possible to notify that this thread has been bonked
+                finally
+                {
+                    //and notify that we're dead
+                    lock (ActiveServers)
+                    {
+                        ActiveServers.Remove(URL);
+                    }
+                    Interlocked.Decrement(ref AliveServerCount);
+                }
             }
-
             /// <summary>
             /// Lets us "using" the server
             /// </summary>
@@ -236,10 +260,20 @@ namespace VideoPlayer
             }
         }
 
+        /// <summary>
+        /// Provides an entry point for the threadpool threads.
+        /// 
+        ///<para>In general, there may be arbitrarily many threads in this method,
+        ///so we need to be sure to maintain resource safety.</para>
+        ///
+        /// <para>There is no association between a server and the processing thread,
+        /// and the threadpool is managed independently of the server collection</para>
+        /// </summary>
         static void ThreadHost()
         {
             try
             {
+                //notify that we've started
                 Interlocked.Increment(ref AliveThreads);
                 while (!_Terminate)
                 {
@@ -272,13 +306,26 @@ namespace VideoPlayer
                     }
                 }
             }
+            //we want to catch any exceptions now
+            catch(Exception e)
+            {
+                Console.WriteLine("ERROR: " + e.Message);
+            }
             finally
             {
+                //be very sure to conk out
+                //It would be problematic if we lost track of any threads hahaha... ha...
                 Interlocked.Decrement(ref AliveThreads);
             }
         }
 
-
+        /// <summary>
+        /// Processes an HTTP listener context
+        /// 
+        /// <para>In a more fully fledged application, this is where we would process
+        /// the URL and request information then divert into an API backend.</para>
+        /// </summary>
+        /// <param name="c"></param>
         static void ProcessContext(HttpListenerContext c)
         {
 
@@ -303,7 +350,11 @@ namespace VideoPlayer
             var parts = requestDetails.Split(';');
 
 
-
+            //we're manually handing the API call here, but for a more extensive player,
+            //we would extract the important information about the API
+            //(aka the endpoint, tokens, arguments, etc)
+            //And process it in some kind of abstracted/genericized class
+            //But in this case we only have two endpoints so yeah...
             if (requestDetails.ToLower().EndsWith("/controller"))
             {
                 c.Response.StatusCode = (int)StreamFile(c, "controller.html", null);
@@ -321,20 +372,35 @@ namespace VideoPlayer
                 {
                     f.PlayPause();
                 }
-
+                // finish and wrap everything up
+                c.Response.StatusCode = (int)statusCode;
+                if (statusCode == HttpStatusCode.OK)
+                {
+                    c.Response.AddHeader("Date", DateTime.Now.ToString("r"));
+                    c.Response.AddHeader("Last-Modified", DateTime.MinValue.ToString("r"));
+                }
+                c.Response.OutputStream.Close();
+                return;
             }
 
             string? path = null;
             string? key = null;
 
-            //Try to read the URL pieces
+            //We didn't have an API call.... so...
+            //Let's try to extract the video information
             foreach(var p in parts)
             {
                 int n;
+                //we stored the video into a map for easier access
+                //A larger application may refer to a unique ID for a larger content provider
                 if ((n = p.IndexOf("v=")) > 0) UrlRelators.TryGetValue(p.Substring(n + 2), out path);
+                //and read the key. Not the safest way of doing this
+                //public/private keys (with prime factorization) offers a more secure approach
+                //but yeah anyway
                 if ((n = p.IndexOf("k=")) > 0) key = p.Substring(n + 2);
             }
 
+            //stream the file
             HttpStatusCode result = HttpStatusCode.OK;
             if (path != null) result = StreamFile(c, path, key);
 
@@ -348,6 +414,15 @@ namespace VideoPlayer
             c.Response.OutputStream.Close();
         }
 
+        /// <summary>
+        /// Streams a file into the output stream of the given HTTP context.
+        /// 
+        /// <para>This function can be used for just about any filetype, it's very handy.</para>
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="filename"></param>
+        /// <param name="key"></param>
+        /// <returns></returns>
         static HttpStatusCode StreamFile(HttpListenerContext context, string? filename, string? key)
         {
             HttpStatusCode statusCode;
@@ -373,11 +448,15 @@ namespace VideoPlayer
                         }
 
                         //Now generate the streams
+                        //We've built our own cryptography callback into this function
+                        //Since building our own video graphs is a big pain
+                        //and no existing players let us feed them any kind of raw stream
+                        //Which is nonsensical but hey, it's whatever
                         stream = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.Read);
                         if (encrypted)
                         {
                             var k = AesHelper.DeriveKeyFromPassword(key ?? "default");
-                            stream = new CryptoStream(stream, k.Key, k.IV);
+                            stream = new AesCtrStream(stream, k.Key, k.IV);
                         }
 
                         // get mime type

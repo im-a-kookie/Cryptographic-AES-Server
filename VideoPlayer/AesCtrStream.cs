@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 namespace VideoPlayer
 {
 
-    public class CryptoStream : Stream
+    public class AesCtrStream : Stream
     {
         private readonly Stream _baseStream;
         private readonly Aes _aes;
@@ -22,7 +22,7 @@ namespace VideoPlayer
         
 
 
-        public CryptoStream(Stream baseStream, byte[] key, byte[] iv)
+        public AesCtrStream(Stream baseStream, byte[] key, byte[] iv)
         {
             _baseStream = baseStream;
             _aes = Aes.Create();

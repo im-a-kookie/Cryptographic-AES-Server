@@ -34,7 +34,7 @@
     <button onclick="sendPostRequest()">Play/Pause</button>
     <script>
         function sendPostRequest() {
-            /* Literally just send the post request */
+            /* Literally just send a post request */
             fetch('/playpause', {
                 method: 'POST',
                 headers: {
@@ -42,6 +42,16 @@
                 },
                 body: ""
             });
+            /* 
+            In a more complicated product, we could e.g use e.g GET and .then to process the reply.
+               
+            Javascript also exposes websockets, which we could e.g use to stream the current
+            position of the player.
+
+            It's also entirely possible to use a web player inside of the browser - the
+            media server delivers a regular video stream, so this would follow an entirely
+            standard approach.
+            */
 }</script>
 </body>
 </html>

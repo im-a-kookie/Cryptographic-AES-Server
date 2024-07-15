@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace VideoPlayer
 {
-    internal class MimeHelper
+    public class MimeHelper
     {
 
         /// <summary>
@@ -18,11 +18,13 @@ namespace VideoPlayer
             {".asf", "video/x-ms-asf"},
             {".asx", "video/x-ms-asf"},
             {".avi", "video/x-msvideo"},
+            {".css", "text/css"},
             {".flv", "video/x-flv"},
             {".gif", "image/gif"},
             {".jng", "image/x-jng"},
             {".jpeg", "image/jpeg"},
             {".jpg", "image/jpeg"},
+            {".js", "text/javascript"},
             {".m4v", "audio/mpeg"},
             {".mng", "video/x-mng"},
             {".mov", "video/quicktime"},
